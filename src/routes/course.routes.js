@@ -6,6 +6,7 @@ import {
   create, update, remove, getOne, list,
   setTeachers, getTeachers, myTeachingCourses
 } from "../controllers/course.controller.js";
+import { overview } from "../controllers/course.controller.js";
 
 // ADD THIS:
 import messageRoutes from "./message.routes.js";
@@ -27,6 +28,9 @@ router.post("/:id/teachers", requireAuth, requireRole("admin"), setTeachers);
 
 // teacher's own courses
 router.get("/me/teaching/list", requireAuth, requireRole("teacher"), myTeachingCourses);
+
+// overview (one-call detail bundle)
+router.get("/:id/overview", requireAuth, overview);
 
 // NESTED MESSAGES UNDER COURSES:
 router.use("/:course_id/messages", messageRoutes);
