@@ -179,6 +179,36 @@ await pool.query(`
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
 
+    // Messages per course
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS messages (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      course_id INT NOT NULL,
+      sender_id INT NOT NULL,
+      body TEXT,
+      attachment_url VARCHAR(500),
+      reply_to INT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      CONSTRAINT fk_msg_course FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
+      CONSTRAINT fk_msg_sender FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
+      CONSTRAINT fk_msg_reply  FOREIGN KEY (reply_to)  REFERENCES messages(id) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+
+  // Read receipts (optional but useful)
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS message_reads (
+      message_id INT NOT NULL,
+      user_id INT NOT NULL,
+      read_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (message_id, user_id),
+      CONSTRAINT fk_mr_msg  FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE,
+      CONSTRAINT fk_mr_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+
+
 
 
 

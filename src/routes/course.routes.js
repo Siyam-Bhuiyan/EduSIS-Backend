@@ -7,6 +7,9 @@ import {
   setTeachers, getTeachers, myTeachingCourses
 } from "../controllers/course.controller.js";
 
+// ADD THIS:
+import messageRoutes from "./message.routes.js";
+
 const router = Router();
 
 // public listing for logged-in users
@@ -24,5 +27,8 @@ router.post("/:id/teachers", requireAuth, requireRole("admin"), setTeachers);
 
 // teacher's own courses
 router.get("/me/teaching/list", requireAuth, requireRole("teacher"), myTeachingCourses);
+
+// NESTED MESSAGES UNDER COURSES:
+router.use("/:course_id/messages", messageRoutes);
 
 export default router;

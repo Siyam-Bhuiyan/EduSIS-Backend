@@ -46,3 +46,254 @@ Assignments.jsx (teacher create/edit): POST /api/assignments, PATCH /api/assignm
 AssignGrades.jsx: GET /api/assignments/:id/submissions, POST /api/assignments/:id/grade/:student_id
 
 Results.jsx: GET /api/assignments/me/results/list
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+got it — here’s a tight **Frontend Mapping Quick Guide** for **Announcements** and **Online Classes (Jitsi)** so you can wire `Announcements.jsx`, `OnlineClasses.jsx`, and `JitsiMeetingScreen.jsx` fast.
+
+---
+
+# Announcements.jsx
+
+## Base
+
+* Base URL: `/api/announcements`
+* Auth: `Authorization: Bearer <token>` (all endpoints)
+* Visibility rules handled server‑side:
+
+  * Student sees `visible_to ∈ ["all","students"]`
+  * Teacher sees `["all","teachers"]`
+  * Admin sees all
+
+## Endpoints you’ll call
+
+* **List** (course specific or global):
+
+  * `GET /api/announcements?course_id=:courseId&page=1&limit=20`
+  * If you omit `course_id`, it returns **global** announcements (plus any visibility matches).
+* **Get one**:
+
+  * `GET /api/announcements/:id`
+* **Create** (teacher/admin):
+
+  * `POST /api/announcements`
+* **Update** (owner or admin):
+
+  * `PATCH /api/announcements/:id`
+* **Delete** (owner or admin):
+
+  * `DELETE /api/announcements/:id`
+
+## Shapes
+
+* **List response**
+
+```json
+{
+  "rows": [
+    {
+      "id": 5,
+      "course_id": 1,
+      "title": "Midterm schedule posted",
+      "visible_to": "students",
+      "pinned": 1,
+      "created_at": "2025-08-14T12:34:56.000Z",
+      "course_title": "Data Structures",
+      "course_code": "CSE2101"
+    }
+  ],
+  "count": 32,
+  "page": 1,
+  "limit": 20
+}
+```
+
+* **Single announcement**
+
+```json
+{
+  "id": 5,
+  "course_id": 1,
+  "title": "Midterm schedule posted",
+  "body": "Check the course page for details.",
+  "visible_to": "students",
+  "pinned": 1,
+  "created_by": 3,
+  "created_at": "2025-08-14T12:34:56.000Z",
+  "updated_at": "2025-08-14T12:34:56.000Z",
+  "course_title": "Data Structures",
+  "course_code": "CSE2101"
+}
+```
+
+## Minimal UI flow
+
+* On course page mount: `GET /api/announcements?course_id=:courseId&page=1&limit=20`
+* Optional global feed (dashboard): `GET /api/announcements?page=1&limit=10`
+* Teachers/Admins:
+
+  * Create modal → `POST /api/announcements`
+  * Edit inline/popup → `PATCH /api/announcements/:id`
+  * Delete → `DELETE /api/announcements/:id`
+* Pinning: send `{ "pinned": true }` in PATCH; list already sorts `pinned` first
+
+## Quick axios snippets
+
+```js
+// list (course)
+api.get(`/api/announcements`, { params: { course_id, page, limit } });
+
+// create (teacher/admin)
+api.post(`/api/announcements`, {
+  course_id, title, body, visible_to: "students", pinned: false
+});
+
+// update
+api.patch(`/api/announcements/${id}`, { title, pinned });
+
+// delete
+api.delete(`/api/announcements/${id}`);
+```
+
+## What to render (suggested)
+
+* Card list with: `title`, optional `course_code`, `created_at`, `pinned` badge
+* Expand/click → fetch full body via `GET /:id` (or include body in list UI if you prefer)
+
+---
+
+# OnlineClasses.jsx + JitsiMeetingScreen.jsx
+
+## Base
+
+* Base URL: `/api/classes`
+* Auth: `Authorization: Bearer <token>`
+
+## Endpoints you’ll call
+
+* **List classes** (any logged‑in):
+
+  * `GET /api/classes?course_id=:courseId&upcoming=true&page=1&limit=20`
+* **Get one**:
+
+  * `GET /api/classes/:id`
+* **Join (get URL)**:
+
+  * `GET /api/classes/:id/join` → `{ "meeting_url": "https://meet.jit.si/..." }`
+* **Create/Update/Delete** (teacher/admin only):
+
+  * `POST /api/classes`
+  * `PATCH /api/classes/:id`
+  * `DELETE /api/classes/:id`
+* **Role-specific upcoming feeds**:
+
+  * Student: `GET /api/classes/me/student/upcoming`
+  * Teacher: `GET /api/classes/me/teacher/upcoming`
+
+## Shapes
+
+* **List response**
+
+```json
+{
+  "rows": [
+    {
+      "id": 7,
+      "course_id": 1,
+      "title": "Week 3: Graph Traversal Live",
+      "meeting_url": "https://meet.jit.si/CSE2101-Week3-GraphTraversal",
+      "start_at": "2025-08-20T10:30:00.000Z",
+      "end_at": "2025-08-20T12:00:00.000Z",
+      "created_at": "2025-08-14T12:34:56.000Z",
+      "course_title": "Data Structures",
+      "course_code": "CSE2101"
+    }
+  ],
+  "count": 4,
+  "page": 1,
+  "limit": 20
+}
+```
+
+* **Join response**
+
+```json
+{ "meeting_url": "https://meet.jit.si/CSE2101-Week3-GraphTraversal" }
+```
+
+## Minimal UI flow
+
+* Course classes tab: `GET /api/classes?course_id=:courseId&upcoming=true`
+* Student dashboard upcoming panel: `GET /api/classes/me/student/upcoming`
+* Teacher dashboard upcoming panel: `GET /api/classes/me/teacher/upcoming`
+* “Join” button:
+
+  1. `GET /api/classes/:id/join`
+  2. Navigate to `JitsiMeetingScreen.jsx` and pass the URL (or store it in state)
+  3. Jitsi component opens `meeting_url`
+
+## Quick axios snippets
+
+```js
+// list upcoming by course
+api.get(`/api/classes`, { params: { course_id, upcoming: true, page, limit } });
+
+// create (teacher/admin)
+api.post(`/api/classes`, {
+  course_id, title, meeting_url, start_at, end_at
+});
+
+// update
+api.patch(`/api/classes/${id}`, { start_at });
+
+// delete
+api.delete(`/api/classes/${id}`);
+
+// join (for JitsiMeetingScreen)
+const { data } = await api.get(`/api/classes/${id}/join`);
+const { meeting_url } = data;
+```
+
+## JitsiMeetingScreen.jsx glue
+
+* Input: `meeting_url` (prop, state, or from `useParams` → fetch)
+* Example:
+
+```js
+// when user hits "Join"
+const { data: { meeting_url } } = await api.get(`/api/classes/${id}/join`);
+setMeetingUrl(meeting_url); // then render your Jitsi component with it
+```
+
+## What to render (suggested)
+
+* List item: `title`, `course_code`, human‑readable time (local tz), “Join” button
+* Teacher view: “Edit / Delete”
+* Validation: disable “Join” if `start_at` is in the future (optional timer)
+
+---
+
+# Bonus: UpcomingEventsPanel.jsx hook‑ups (optional)
+
+* Student feed: `GET /api/classes/me/student/upcoming` (map to event tiles)
+* Teacher feed: `GET /api/classes/me/teacher/upcoming`
+* Announcements widget on dashboard: `GET /api/announcements?page=1&limit=5` (global)
+
+---
+
+If this mapping looks good, I’ll proceed with **Messages (course chat)** next: tiny tables + endpoints for `Messages.jsx` with typing + pagination.
