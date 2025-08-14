@@ -5,6 +5,7 @@ import helmet from "helmet";
 import morgan from "morgan";
 import authRoutes from "./routes/auth.routes.js";
 import studentRoutes from "./routes/student.routes.js";
+import teacherRoutes from "./routes/teacher.routes.js";
 
 const app = express();
 
@@ -17,5 +18,6 @@ app.get("/health", (req, res) => res.json({ status: "ok" }));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/students", studentRoutes); 
+app.use("/api/teachers", teacherRoutes);
 
 export default app;

@@ -63,6 +63,60 @@ export async function initDB() {
   `);
 
 
+    // Departments
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS departments (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(150) NOT NULL UNIQUE,
+      code VARCHAR(20) NOT NULL UNIQUE,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+
+  // Courses
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS courses (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      department_id INT NOT NULL,
+      title VARCHAR(200) NOT NULL,
+      code VARCHAR(30) NOT NULL UNIQUE,
+      credit DECIMAL(3,1) NOT NULL DEFAULT 3.0,
+      description TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      CONSTRAINT fk_courses_dept FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE RESTRICT
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+
+  // Course ↔ Teachers (many-to-many)
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS course_teachers (
+      course_id INT NOT NULL,
+      teacher_id INT NOT NULL,
+      PRIMARY KEY (course_id, teacher_id),
+      CONSTRAINT fk_ct_course FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
+      CONSTRAINT fk_ct_teacher FOREIGN KEY (teacher_id) REFERENCES users(id) ON DELETE CASCADE,
+      CONSTRAINT chk_ct_teacher_role CHECK (teacher_id IN (SELECT id FROM users WHERE role='teacher'))
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+
+  // Enrollments (student ↔ course)
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS enrollments (
+      course_id INT NOT NULL,
+      student_id INT NOT NULL,
+      status ENUM('enrolled','dropped') NOT NULL DEFAULT 'enrolled',
+      enrolled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (course_id, student_id),
+      CONSTRAINT fk_en_course FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
+      CONSTRAINT fk_en_student FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
+      CONSTRAINT chk_en_student_role CHECK (student_id IN (SELECT id FROM users WHERE role='student'))
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+
+
+
 
   return pool;
 }

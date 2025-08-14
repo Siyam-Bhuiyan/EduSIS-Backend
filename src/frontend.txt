@@ -11,3 +11,10 @@ how this maps to your frontend
 Students.jsx (admin): use list /api/students, create /api/students, edit /api/students/:id, delete /api/students/:id.
 
 StudentDashboard.jsx / Profile.jsx: use GET /api/students/me/profile to show the student’s profile; for edits, call PATCH /api/students/:id (their own id from /api/auth/me).
+
+
+Frontend mapping
+
+Teachers.jsx (admin directory): use list, create, edit, delete above.
+
+TeacherDashboard.jsx / Profile.jsx: use GET /api/teachers/me/profile; for edits call PATCH /api/teachers/:id (id from /api/auth/me).
