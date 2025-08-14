@@ -2,7 +2,9 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/auth.js";
 import { requireCourseMember } from "../middleware/courseAccess.js";
-import { list, create, update, remove, mark_read, list_readers } from "../controllers/message.controller.js";
+import {
+  list, create, update, remove, mark_read, list_readers
+} from "../controllers/message.controller.js";
 
 const router = Router({ mergeParams: true });
 
