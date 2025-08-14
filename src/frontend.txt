@@ -18,3 +18,18 @@ Frontend mapping
 Teachers.jsx (admin directory): use list, create, edit, delete above.
 
 TeacherDashboard.jsx / Profile.jsx: use GET /api/teachers/me/profile; for edits call PATCH /api/teachers/:id (id from /api/auth/me).
+
+
+Frontend mapping quick guide
+
+Courses.jsx → GET /api/courses (+ search/department filters).
+
+CourseCard.jsx → uses list data fields title, code, credit, department_name.
+
+CourseDetail.jsx → GET /api/courses/:id (includes teachers[], enrolled_count).
+
+TeacherAssignment.jsx (admin) → GET /api/courses/:id/teachers, POST /api/courses/:id/teachers.
+
+StudentEnrollment.jsx → POST /api/enrollments/me (Enroll), DELETE /api/enrollments/me/:course_id (Drop), GET /api/enrollments/me (list my courses).
+
+TeacherCourseDetail.jsx → use GET /api/courses/me/teaching/list + /api/courses/:id.
