@@ -46,6 +46,23 @@ export async function initDB() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
 
+    // Teacher profiles (1:1 with users of role 'teacher')
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS teacher_profiles (
+      user_id INT PRIMARY KEY,
+      employee_no VARCHAR(50) UNIQUE,
+      phone VARCHAR(30),
+      dob DATE,
+      department VARCHAR(120),
+      designation VARCHAR(120),
+      bio VARCHAR(500),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      CONSTRAINT fk_tp_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+
+
 
   return pool;
 }

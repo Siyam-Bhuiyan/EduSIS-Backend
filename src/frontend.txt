@@ -1,0 +1,13 @@
+how this maps to your frontend right now
+
+Login.jsx / Register.jsx → use /api/auth/login and /api/auth/register to authenticate; store the returned token in local storage (or httpOnly cookie if you prefer later).
+
+Any page that needs the current user (e.g., StudentDashboard.jsx, TeacherDashboard.jsx, AdminDashboard.jsx, Profile.jsx) → call /api/auth/me with the Authorization: Bearer <token> header.
+
+
+
+how this maps to your frontend
+
+Students.jsx (admin): use list /api/students, create /api/students, edit /api/students/:id, delete /api/students/:id.
+
+StudentDashboard.jsx / Profile.jsx: use GET /api/students/me/profile to show the student’s profile; for edits, call PATCH /api/students/:id (their own id from /api/auth/me).
