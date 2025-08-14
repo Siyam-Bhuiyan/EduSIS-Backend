@@ -113,51 +113,72 @@ export async function initDB() {
 `);
 
   // Assignments (per course, created by a teacher)
+await pool.query(`
+  CREATE TABLE IF NOT EXISTS assignments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    course_id INT NOT NULL,
+    title VARCHAR(200) NOT NULL,
+    description TEXT,
+    due_at DATETIME NULL,
+    created_by INT NULL,              -- now NULL to allow ON DELETE SET NULL
+    attachment_url VARCHAR(500),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_asg_course FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
+    CONSTRAINT fk_asg_teacher FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+`);
+
+// Grades (teacher -> submission)
+await pool.query(`
+  CREATE TABLE IF NOT EXISTS grades (
+    assignment_id INT NOT NULL,
+    student_id INT NOT NULL,
+    score DECIMAL(5,2) NOT NULL,
+    feedback VARCHAR(1000),
+    graded_by INT NULL,               -- now NULL to allow ON DELETE SET NULL
+    graded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (assignment_id, student_id),
+    CONSTRAINT fk_gr_asg FOREIGN KEY (assignment_id) REFERENCES assignments(id) ON DELETE CASCADE,
+    CONSTRAINT fk_gr_student FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_gr_teacher FOREIGN KEY (graded_by) REFERENCES users(id) ON DELETE SET NULL
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+`);
+
+  // Announcements (global or per-course)
   await pool.query(`
-    CREATE TABLE IF NOT EXISTS assignments (
+    CREATE TABLE IF NOT EXISTS announcements (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      course_id INT NULL,                       -- null = global
+      title VARCHAR(200) NOT NULL,
+      body TEXT,
+      visible_to ENUM('all','students','teachers') NOT NULL DEFAULT 'all',
+      pinned TINYINT(1) NOT NULL DEFAULT 0,
+      created_by INT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      CONSTRAINT fk_ann_course FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE SET NULL,
+      CONSTRAINT fk_ann_creator FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+
+  // Online classes (Jitsi or any meeting link)
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS online_classes (
       id INT AUTO_INCREMENT PRIMARY KEY,
       course_id INT NOT NULL,
       title VARCHAR(200) NOT NULL,
-      description TEXT,
-      due_at DATETIME NULL,
-      created_by INT NOT NULL, -- teacher user id
-      attachment_url VARCHAR(500),
+      meeting_url VARCHAR(500) NOT NULL,        -- e.g., https://meet.jit.si/RoomName
+      start_at DATETIME NOT NULL,
+      end_at DATETIME NULL,
+      created_by INT NULL,                      -- teacher/admin
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-      CONSTRAINT fk_asg_course FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
-      CONSTRAINT fk_asg_teacher FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+      CONSTRAINT fk_cls_course FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
+      CONSTRAINT fk_cls_creator FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
 
-  // Submissions (student -> assignment)
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS submissions (
-      assignment_id INT NOT NULL,
-      student_id INT NOT NULL,
-      submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      file_url VARCHAR(500),
-      text_answer TEXT,
-      PRIMARY KEY (assignment_id, student_id),
-      CONSTRAINT fk_sub_asg FOREIGN KEY (assignment_id) REFERENCES assignments(id) ON DELETE CASCADE,
-      CONSTRAINT fk_sub_student FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-  `);
-
-  // Grades (teacher -> submission)
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS grades (
-      assignment_id INT NOT NULL,
-      student_id INT NOT NULL,
-      score DECIMAL(5,2) NOT NULL,
-      feedback VARCHAR(1000),
-      graded_by INT NOT NULL,
-      graded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      PRIMARY KEY (assignment_id, student_id),
-      CONSTRAINT fk_gr_asg FOREIGN KEY (assignment_id) REFERENCES assignments(id) ON DELETE CASCADE,
-      CONSTRAINT fk_gr_student FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
-      CONSTRAINT fk_gr_teacher FOREIGN KEY (graded_by) REFERENCES users(id) ON DELETE SET NULL
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-  `);
 
 
 

@@ -33,3 +33,16 @@ TeacherAssignment.jsx (admin) → GET /api/courses/:id/teachers, POST /api/cours
 StudentEnrollment.jsx → POST /api/enrollments/me (Enroll), DELETE /api/enrollments/me/:course_id (Drop), GET /api/enrollments/me (list my courses).
 
 TeacherCourseDetail.jsx → use GET /api/courses/me/teaching/list + /api/courses/:id.
+
+
+Frontend mapping quick guide
+
+Assignments.jsx (student view): GET /api/assignments?course_id=:id, GET /api/assignments/:id
+
+Assignments.jsx (submission): POST /api/assignments/:id/submit
+
+Assignments.jsx (teacher create/edit): POST /api/assignments, PATCH /api/assignments/:id, DELETE /api/assignments/:id
+
+AssignGrades.jsx: GET /api/assignments/:id/submissions, POST /api/assignments/:id/grade/:student_id
+
+Results.jsx: GET /api/assignments/me/results/list
