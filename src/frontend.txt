@@ -1,299 +1,188 @@
-how this maps to your frontend right now
-
-Login.jsx / Register.jsx → use /api/auth/login and /api/auth/register to authenticate; store the returned token in local storage (or httpOnly cookie if you prefer later).
-
-Any page that needs the current user (e.g., StudentDashboard.jsx, TeacherDashboard.jsx, AdminDashboard.jsx, Profile.jsx) → call /api/auth/me with the Authorization: Bearer <token> header.
-
-
-
-how this maps to your frontend
-
-Students.jsx (admin): use list /api/students, create /api/students, edit /api/students/:id, delete /api/students/:id.
-
-StudentDashboard.jsx / Profile.jsx: use GET /api/students/me/profile to show the student’s profile; for edits, call PATCH /api/students/:id (their own id from /api/auth/me).
-
-
-Frontend mapping
-
-Teachers.jsx (admin directory): use list, create, edit, delete above.
-
-TeacherDashboard.jsx / Profile.jsx: use GET /api/teachers/me/profile; for edits call PATCH /api/teachers/:id (id from /api/auth/me).
-
-
-Frontend mapping quick guide
-
-Courses.jsx → GET /api/courses (+ search/department filters).
-
-CourseCard.jsx → uses list data fields title, code, credit, department_name.
-
-CourseDetail.jsx → GET /api/courses/:id (includes teachers[], enrolled_count).
-
-TeacherAssignment.jsx (admin) → GET /api/courses/:id/teachers, POST /api/courses/:id/teachers.
-
-StudentEnrollment.jsx → POST /api/enrollments/me (Enroll), DELETE /api/enrollments/me/:course_id (Drop), GET /api/enrollments/me (list my courses).
-
-TeacherCourseDetail.jsx → use GET /api/courses/me/teaching/list + /api/courses/:id.
-
-
-Frontend mapping quick guide
-
-Assignments.jsx (student view): GET /api/assignments?course_id=:id, GET /api/assignments/:id
-
-Assignments.jsx (submission): POST /api/assignments/:id/submit
-
-Assignments.jsx (teacher create/edit): POST /api/assignments, PATCH /api/assignments/:id, DELETE /api/assignments/:id
-
-AssignGrades.jsx: GET /api/assignments/:id/submissions, POST /api/assignments/:id/grade/:student_id
-
-Results.jsx: GET /api/assignments/me/results/list
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-got it — here’s a tight **Frontend Mapping Quick Guide** for **Announcements** and **Online Classes (Jitsi)** so you can wire `Announcements.jsx`, `OnlineClasses.jsx`, and `JitsiMeetingScreen.jsx` fast.
+here’s your **overall Frontend → Backend Mapping Quick Guide** to wire every screen fast. keep your `Authorization: Bearer <token>` header on.
 
 ---
 
-# Announcements.jsx
+# Base
 
-## Base
+* Base URL: `http://localhost:5000`
+* Auth:
 
-* Base URL: `/api/announcements`
-* Auth: `Authorization: Bearer <token>` (all endpoints)
-* Visibility rules handled server‑side:
-
-  * Student sees `visible_to ∈ ["all","students"]`
-  * Teacher sees `["all","teachers"]`
-  * Admin sees all
-
-## Endpoints you’ll call
-
-* **List** (course specific or global):
-
-  * `GET /api/announcements?course_id=:courseId&page=1&limit=20`
-  * If you omit `course_id`, it returns **global** announcements (plus any visibility matches).
-* **Get one**:
-
-  * `GET /api/announcements/:id`
-* **Create** (teacher/admin):
-
-  * `POST /api/announcements`
-* **Update** (owner or admin):
-
-  * `PATCH /api/announcements/:id`
-* **Delete** (owner or admin):
-
-  * `DELETE /api/announcements/:id`
-
-## Shapes
-
-* **List response**
-
-```json
-{
-  "rows": [
-    {
-      "id": 5,
-      "course_id": 1,
-      "title": "Midterm schedule posted",
-      "visible_to": "students",
-      "pinned": 1,
-      "created_at": "2025-08-14T12:34:56.000Z",
-      "course_title": "Data Structures",
-      "course_code": "CSE2101"
-    }
-  ],
-  "count": 32,
-  "page": 1,
-  "limit": 20
-}
-```
-
-* **Single announcement**
-
-```json
-{
-  "id": 5,
-  "course_id": 1,
-  "title": "Midterm schedule posted",
-  "body": "Check the course page for details.",
-  "visible_to": "students",
-  "pinned": 1,
-  "created_by": 3,
-  "created_at": "2025-08-14T12:34:56.000Z",
-  "updated_at": "2025-08-14T12:34:56.000Z",
-  "course_title": "Data Structures",
-  "course_code": "CSE2101"
-}
-```
-
-## Minimal UI flow
-
-* On course page mount: `GET /api/announcements?course_id=:courseId&page=1&limit=20`
-* Optional global feed (dashboard): `GET /api/announcements?page=1&limit=10`
-* Teachers/Admins:
-
-  * Create modal → `POST /api/announcements`
-  * Edit inline/popup → `PATCH /api/announcements/:id`
-  * Delete → `DELETE /api/announcements/:id`
-* Pinning: send `{ "pinned": true }` in PATCH; list already sorts `pinned` first
-
-## Quick axios snippets
-
-```js
-// list (course)
-api.get(`/api/announcements`, { params: { course_id, page, limit } });
-
-// create (teacher/admin)
-api.post(`/api/announcements`, {
-  course_id, title, body, visible_to: "students", pinned: false
-});
-
-// update
-api.patch(`/api/announcements/${id}`, { title, pinned });
-
-// delete
-api.delete(`/api/announcements/${id}`);
-```
-
-## What to render (suggested)
-
-* Card list with: `title`, optional `course_code`, `created_at`, `pinned` badge
-* Expand/click → fetch full body via `GET /:id` (or include body in list UI if you prefer)
+  * Register: `POST /api/auth/register`
+  * Login: `POST /api/auth/login` → `{ token }`
+  * Me: `GET /api/auth/me`
 
 ---
 
-# OnlineClasses.jsx + JitsiMeetingScreen.jsx
+# Global / Profile
 
-## Base
+* `Profile.jsx`
 
-* Base URL: `/api/classes`
-* Auth: `Authorization: Bearer <token>`
+  * Get me: `GET /api/profile/me`
+  * Update me: `PATCH /api/profile/me`
+  * Change password: `PATCH /api/profile/me/password`
+* `UpcomingEventsPanel.jsx` (student/teacher dashboards)
 
-## Endpoints you’ll call
-
-* **List classes** (any logged‑in):
-
-  * `GET /api/classes?course_id=:courseId&upcoming=true&page=1&limit=20`
-* **Get one**:
-
-  * `GET /api/classes/:id`
-* **Join (get URL)**:
-
-  * `GET /api/classes/:id/join` → `{ "meeting_url": "https://meet.jit.si/..." }`
-* **Create/Update/Delete** (teacher/admin only):
-
-  * `POST /api/classes`
-  * `PATCH /api/classes/:id`
-  * `DELETE /api/classes/:id`
-* **Role-specific upcoming feeds**:
-
-  * Student: `GET /api/classes/me/student/upcoming`
-  * Teacher: `GET /api/classes/me/teacher/upcoming`
-
-## Shapes
-
-* **List response**
-
-```json
-{
-  "rows": [
-    {
-      "id": 7,
-      "course_id": 1,
-      "title": "Week 3: Graph Traversal Live",
-      "meeting_url": "https://meet.jit.si/CSE2101-Week3-GraphTraversal",
-      "start_at": "2025-08-20T10:30:00.000Z",
-      "end_at": "2025-08-20T12:00:00.000Z",
-      "created_at": "2025-08-14T12:34:56.000Z",
-      "course_title": "Data Structures",
-      "course_code": "CSE2101"
-    }
-  ],
-  "count": 4,
-  "page": 1,
-  "limit": 20
-}
-```
-
-* **Join response**
-
-```json
-{ "meeting_url": "https://meet.jit.si/CSE2101-Week3-GraphTraversal" }
-```
-
-## Minimal UI flow
-
-* Course classes tab: `GET /api/classes?course_id=:courseId&upcoming=true`
-* Student dashboard upcoming panel: `GET /api/classes/me/student/upcoming`
-* Teacher dashboard upcoming panel: `GET /api/classes/me/teacher/upcoming`
-* “Join” button:
-
-  1. `GET /api/classes/:id/join`
-  2. Navigate to `JitsiMeetingScreen.jsx` and pass the URL (or store it in state)
-  3. Jitsi component opens `meeting_url`
-
-## Quick axios snippets
-
-```js
-// list upcoming by course
-api.get(`/api/classes`, { params: { course_id, upcoming: true, page, limit } });
-
-// create (teacher/admin)
-api.post(`/api/classes`, {
-  course_id, title, meeting_url, start_at, end_at
-});
-
-// update
-api.patch(`/api/classes/${id}`, { start_at });
-
-// delete
-api.delete(`/api/classes/${id}`);
-
-// join (for JitsiMeetingScreen)
-const { data } = await api.get(`/api/classes/${id}/join`);
-const { meeting_url } = data;
-```
-
-## JitsiMeetingScreen.jsx glue
-
-* Input: `meeting_url` (prop, state, or from `useParams` → fetch)
-* Example:
-
-```js
-// when user hits "Join"
-const { data: { meeting_url } } = await api.get(`/api/classes/${id}/join`);
-setMeetingUrl(meeting_url); // then render your Jitsi component with it
-```
-
-## What to render (suggested)
-
-* List item: `title`, `course_code`, human‑readable time (local tz), “Join” button
-* Teacher view: “Edit / Delete”
-* Validation: disable “Join” if `start_at` is in the future (optional timer)
+  * My events (classes + assignment due): `GET /api/calendar/me?from=:ISO&to=:ISO`
 
 ---
 
-# Bonus: UpcomingEventsPanel.jsx hook‑ups (optional)
+# Admin
 
-* Student feed: `GET /api/classes/me/student/upcoming` (map to event tiles)
-* Teacher feed: `GET /api/classes/me/teacher/upcoming`
-* Announcements widget on dashboard: `GET /api/announcements?page=1&limit=5` (global)
+* `AdminDashboard.jsx`
+
+  * Stats: `GET /api/admin/dashboard/stats`
+* `Students.jsx` (admin CRUD + self read)
+
+  * List: `GET /api/students?page&limit&search`
+  * Create: `POST /api/students` (admin)
+  * Get: `GET /api/students/:id` (self/admin)
+  * Update: `PATCH /api/students/:id` (self/admin)
+  * Delete: `DELETE /api/students/:id` (admin)
+  * Current student profile: `GET /api/students/me/profile`
+* `Teachers.jsx` (admin CRUD + self read)
+
+  * List: `GET /api/teachers?page&limit&search`
+  * Create: `POST /api/teachers` (admin)
+  * Get: `GET /api/teachers/:id` (self/admin)
+  * Update: `PATCH /api/teachers/:id` (self/admin)
+  * Delete: `DELETE /api/teachers/:id` (admin)
+  * Current teacher profile: `GET /api/teachers/me/profile`
+* `Department` admin (if you have a view)
+
+  * List: `GET /api/departments`
+  * Create: `POST /api/departments` (admin)
+  * Get: `GET /api/departments/:id`
+  * Update: `PATCH /api/departments/:id` (admin)
+  * Delete: `DELETE /api/departments/:id` (admin)
 
 ---
 
-If this mapping looks good, I’ll proceed with **Messages (course chat)** next: tiny tables + endpoints for `Messages.jsx` with typing + pagination.
+# Courses & Members
+
+* `Courses.jsx`
+
+  * List: `GET /api/courses?page&limit&search&department_id`
+* `CourseCard.jsx`
+
+  * Use fields from list: `id, title, code, credit, department_name`
+* `CourseDetail.jsx` (student view) / `TeacherCourseDetail.jsx` (teacher view)
+
+  * Overview bundle: `GET /api/courses/:id/overview`
+    (returns: course, teachers\[], enrolled\_count, my\_membership, announcements\[], upcoming\_classes\[], recent\_assignments\[], recent\_messages\[])
+  * Raw course (if needed): `GET /api/courses/:id`
+* `TeacherAssignment.jsx` (assign teachers to course)
+
+  * Get current teachers: `GET /api/courses/:id/teachers`
+  * Set/replace: `POST /api/courses/:id/teachers` (admin)
+
+---
+
+# Enrollment (students)
+
+* `StudentEnrollment.jsx`
+
+  * Enroll: `POST /api/enrollments/me` `{ "course_id": :id }`
+  * Drop: `DELETE /api/enrollments/me/:course_id`
+  * My courses: `GET /api/enrollments/me`
+* Admin enrollments (if needed in admin UI)
+
+  * By course: `GET /api/enrollments/course/:course_id` (admin)
+
+---
+
+# Assignments, Submissions, Grades
+
+* `Assignments.jsx` (list + create/edit + submit)
+
+  * List by course: `GET /api/assignments?course_id=:id&page&limit`
+  * Get one (student also sees own submission/grade): `GET /api/assignments/:id`
+  * Create: `POST /api/assignments` (teacher/admin)
+  * Update: `PATCH /api/assignments/:id` (teacher/admin)
+  * Delete: `DELETE /api/assignments/:id` (teacher/admin)
+  * Submit: `POST /api/assignments/:id/submit` (student) `{ file_url?, text_answer? }`
+  * Teacher view submissions: `GET /api/assignments/:id/submissions` (teacher/admin)
+  * Grade: `POST /api/assignments/:id/grade/:student_id` (teacher/admin) `{ score, feedback? }`
+* `AssignGrades.jsx`
+
+  * Use the submissions + grade endpoints above
+* `Results.jsx` (student)
+
+  * My graded results: `GET /api/assignments/me/results/list`
+
+---
+
+# Announcements
+
+* `Announcements.jsx`
+
+  * List: `GET /api/announcements?course_id=:id&page&limit`
+    (visibility auto-filtered by role)
+  * Get one: `GET /api/announcements/:id`
+  * Create: `POST /api/announcements` (teacher/admin)
+  * Update: `PATCH /api/announcements/:id` (owner/admin)
+  * Delete: `DELETE /api/announcements/:id` (owner/admin)
+
+---
+
+# Online Classes (Jitsi)
+
+* `OnlineClasses.jsx`
+
+  * List by course/upcoming: `GET /api/classes?course_id=:id&upcoming=true&page&limit`
+  * Create: `POST /api/classes` (teacher/admin)
+  * Update/Delete: `PATCH /api/classes/:id`, `DELETE /api/classes/:id` (owner/admin)
+  * Role feeds:
+
+    * Student upcoming: `GET /api/classes/me/student/upcoming`
+    * Teacher upcoming: `GET /api/classes/me/teacher/upcoming`
+* `JitsiMeetingScreen.jsx`
+
+  * Join (get URL): `GET /api/classes/:id/join` → `{ meeting_url }`
+
+---
+
+# Messages (course chat)
+
+* `Messages.jsx`
+
+  * List: `GET /api/courses/:course_id/messages?limit=30&after_id?&before_id?`
+    (member-only: enrolled student / assigned teacher / admin)
+  * Send: `POST /api/courses/:course_id/messages` `{ body | attachment_url }`
+  * Edit: `PATCH /api/courses/:course_id/messages/:message_id`
+  * Delete: `DELETE /api/courses/:course_id/messages/:message_id`
+  * Read receipt (optional): `POST /api/courses/:course_id/messages/read` `{ message_id }`
+  * Readers (optional): `GET /api/courses/:course_id/messages/:message_id/readers`
+
+---
+
+# Dashboards
+
+* `StudentDashboard.jsx`
+
+  * My events: `GET /api/calendar/me` (limit window by query)
+  * My courses: `GET /api/enrollments/me`
+  * Latest announcements (global): `GET /api/announcements?page=1&limit=5`
+* `TeacherDashboard.jsx`
+
+  * Teaching courses: `GET /api/courses/me/teaching/list`
+  * Upcoming classes: `GET /api/classes/me/teacher/upcoming`
+  * Recent announcements you created (optional filter client-side): `GET /api/announcements?page=1&limit=5`
+
+---
+
+# Common patterns & tips
+
+* **Auth header** everywhere after login: `Authorization: Bearer <token>`.
+* **RBAC**:
+
+  * Admin: full CRUD on everything.
+  * Teacher: manages own assignments/announcements/classes; views own courses.
+  * Student: enroll/submit/view own stuff; read messages in enrolled courses.
+* **Pagination**: `page`, `limit` on list endpoints; chats use `after_id`/`before_id`.
+* **Dates** pass/receive as ISO strings (`YYYY-MM-DDTHH:mm:ssZ`).
+* **Conflicts** (409): duplicate email, course code, department code, etc.
+* **Course membership required** for messages endpoints.
+
+---
+
+want me to export all these into a **Postman Collection JSON** with variables pre-set?

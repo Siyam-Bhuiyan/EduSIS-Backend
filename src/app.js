@@ -15,6 +15,7 @@ import announcementRoutes from "./routes/announcement.routes.js";
 import classRoutes from "./routes/class.routes.js";
 import profileRoutes from "./routes/profile.routes.js";
 import calendarRoutes from "./routes/calendar.routes.js";
+import adminRoutes from "./routes/admin.routes.js";
 
 const app = express();
 
@@ -37,5 +38,6 @@ app.use("/api/classes", classRoutes);
 //app.use("/api/courses/:course_id/messages", messageRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/calendar", calendarRoutes);
+app.use("/api/admin", adminRoutes);
 
 export default app;
