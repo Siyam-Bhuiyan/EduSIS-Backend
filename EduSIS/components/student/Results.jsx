@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,10 +8,13 @@ import {
   SafeAreaView,
   StatusBar,
   Animated,
+  Alert,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useTheme } from "../../theme/ThemeProvider";
+import { useUser } from "../../contexts/UserContext";
+import ApiService from "../../services/ApiService";
 
 const DEMO_COURSES = [
   { course_id: "CSE-301", title: "Computer Networks" },
@@ -101,21 +104,195 @@ const getTopThreeQuizzesTotal = (g) => {
 
 export default function Results() {
   const { colors } = useTheme();
+  const { user } = useUser();
   const [selectedCourse, setSelectedCourse] = useState("");
+  const [courses, setCourses] = useState([]);
+  const [grades, setGrades] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const grades = useMemo(
-    () => (selectedCourse ? DEMO_GRADES[selectedCourse] : null),
-    [selectedCourse]
+  // Demo data - keeping for backup/comparison
+  const DEMO_COURSES = [
+    {
+      _id: "demo-course-1",
+      courseCode: "CSE-301",
+      title: "Computer Networks",
+      isFromAPI: false,
+    },
+    {
+      _id: "demo-course-2",
+      courseCode: "CSE-205",
+      title: "Database Systems",
+      isFromAPI: false,
+    },
+    {
+      _id: "demo-course-3",
+      courseCode: "CSE-401",
+      title: "Software Engineering",
+      isFromAPI: false,
+    },
+  ];
+
+  const DEMO_GRADES = {
+    "demo-course-1": {
+      quiz1_marks: 9,
+      quiz2_marks: 8,
+      quiz3_marks: 10,
+      assignments_marks: 18,
+      attendance_marks: 8,
+      mid_sem_marks: 24,
+      final_sem_marks: 36,
+      total_marks: 113,
+      grade: "A",
+    },
+    "demo-course-2": {
+      quiz1_marks: 7,
+      quiz2_marks: 9,
+      quiz3_marks: 6,
+      assignments_marks: 16,
+      attendance_marks: 10,
+      mid_sem_marks: 20,
+      final_sem_marks: 32,
+      total_marks: 100,
+      grade: "B+",
+    },
+    "demo-course-3": {
+      quiz1_marks: 10,
+      quiz2_marks: 10,
+      quiz3_marks: 8,
+      assignments_marks: 19,
+      attendance_marks: 9,
+      mid_sem_marks: 26,
+      final_sem_marks: 38,
+      total_marks: 120,
+      grade: "A+",
+    },
+  };
+
+  useEffect(() => {
+    if (user && user.id) {
+      fetchCourses();
+      fetchGrades();
+    }
+  }, [user]);
+
+  // Auto-select first course when courses are loaded
+  useEffect(() => {
+    if (courses.length > 0 && !selectedCourse) {
+      setSelectedCourse(courses[0]._id);
+    }
+  }, [courses, selectedCourse]);
+
+  useEffect(() => {
+    if (selectedCourse && user && user.id) {
+      fetchCourseGrade();
+    }
+  }, [selectedCourse, user]);
+
+  const fetchCourses = async () => {
+    try {
+      const response = await ApiService.getStudentCourses(user.id);
+      if (response.success && response.data && response.data.length > 0) {
+        // Transform real courses to match expected format
+        const realCourses = response.data.map((course) => ({
+          _id: course._id,
+          courseCode: course.courseCode,
+          title: course.title,
+          isFromAPI: true,
+        }));
+        setCourses(realCourses);
+      } else {
+        // Use demo courses if no real courses found
+        setCourses(DEMO_COURSES);
+      }
+    } catch (error) {
+      console.log("Using demo courses due to API error:", error.message);
+      setCourses(DEMO_COURSES);
+    }
+  };
+
+  const fetchGrades = async () => {
+    try {
+      setLoading(true);
+      const response = await ApiService.getStudentGrades(user.id, {
+        published: true,
+      });
+      if (response.success && response.data && response.data.length > 0) {
+        setGrades(response.data);
+      } else {
+        // Keep grades empty if no real grades, will fallback to demo in currentGrade
+        setGrades([]);
+      }
+    } catch (error) {
+      console.log("No real grades found, will use demo data:", error.message);
+      setGrades([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchCourseGrade = async () => {
+    try {
+      const response = await ApiService.getStudentGrades(user.id, {
+        courseId: selectedCourse,
+        published: true,
+      });
+      if (response.success && response.data && response.data.length > 0) {
+        setGrades(response.data);
+      } else {
+        // Keep grades empty, will fallback to demo
+        setGrades([]);
+      }
+    } catch (error) {
+      console.log("No course grade found, will use demo data:", error.message);
+      setGrades([]);
+    }
+  };
+
+  // Find the current grade data
+  const currentGrade = useMemo(() => {
+    if (!selectedCourse) return null;
+
+    // First try to find from API data
+    const apiGrade = grades.find(
+      (grade) => grade.course._id === selectedCourse
+    );
+    if (apiGrade) return apiGrade;
+
+    // Fallback to demo data
+    if (DEMO_GRADES[selectedCourse]) {
+      return DEMO_GRADES[selectedCourse];
+    }
+
+    return null;
+  }, [selectedCourse, grades]);
+
+  const quizTotal = useMemo(
+    () => getTopThreeQuizzesTotal(currentGrade),
+    [currentGrade]
   );
+  const gradeColor = currentGrade
+    ? getGradeColor(currentGrade.grade)
+    : colors.textDim;
+  const gradeBgColor = currentGrade
+    ? getGradeBackground(currentGrade.grade)
+    : colors.bg;
 
-  const quizTotal = useMemo(() => getTopThreeQuizzesTotal(grades), [grades]);
-  const gradeColor = grades ? getGradeColor(grades.grade) : colors.textDim;
-  const gradeBgColor = grades ? getGradeBackground(grades.grade) : colors.bg;
+  const selectedCourseInfo = useMemo(() => {
+    return (
+      courses.find((c) => c._id === selectedCourse) ||
+      DEMO_COURSES.find((c) => c._id === selectedCourse)
+    );
+  }, [selectedCourse, courses]);
 
-  const selectedCourseInfo = useMemo(
-    () => DEMO_COURSES.find((c) => c.course_id === selectedCourse),
-    [selectedCourse]
-  );
+  // Combine real courses with demo courses for picker
+  const allCourses = useMemo(() => {
+    // If we have real courses, use them, otherwise use demo courses
+    if (courses.length > 0 && courses[0].isFromAPI) {
+      return courses;
+    } else {
+      return DEMO_COURSES;
+    }
+  }, [courses]);
 
   const renderGradeCard = (
     title,
@@ -178,7 +355,7 @@ export default function Results() {
       <StatusBar barStyle={colors.isDark ? "light-content" : "dark-content"} />
 
       {/* Header */}
-      
+
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.contentContainer}
@@ -217,11 +394,13 @@ export default function Results() {
               dropdownIconColor={colors.primary}
             >
               <Picker.Item label="-- Choose a Course --" value="" />
-              {DEMO_COURSES.map((c) => (
+              {allCourses.map((c) => (
                 <Picker.Item
-                  key={c.course_id}
-                  label={`${c.course_id} - ${c.title}`}
-                  value={c.course_id}
+                  key={c._id}
+                  label={`${c.courseCode} - ${c.title}${
+                    c.isFromAPI ? " (Live)" : " (Demo)"
+                  }`}
+                  value={c._id}
                 />
               ))}
             </Picker>
@@ -229,7 +408,7 @@ export default function Results() {
         </View>
 
         {/* Course Info & Results */}
-        {grades ? (
+        {currentGrade ? (
           <>
             {/* Course Info Banner */}
             <View
@@ -243,7 +422,7 @@ export default function Results() {
             >
               <View style={styles.courseInfoContent}>
                 <Text style={[styles.courseCode, { color: colors.primary }]}>
-                  {selectedCourse}
+                  {selectedCourseInfo?.courseCode}
                 </Text>
                 <Text style={[styles.courseTitle, { color: colors.text }]}>
                   {selectedCourseInfo?.title}
@@ -261,7 +440,7 @@ export default function Results() {
                   Total Score
                 </Text>
                 <Text style={[styles.totalScore, { color: gradeColor }]}>
-                  {grades.total_marks}
+                  {currentGrade.total_marks}
                 </Text>
               </View>
             </View>
@@ -272,9 +451,9 @@ export default function Results() {
                 "Quizzes",
                 "quiz",
                 [
-                  { label: "Quiz 1", value: grades.quiz1_marks },
-                  { label: "Quiz 2", value: grades.quiz2_marks },
-                  { label: "Quiz 3", value: grades.quiz3_marks },
+                  { label: "Quiz 1", value: currentGrade.quiz1_marks },
+                  { label: "Quiz 2", value: currentGrade.quiz2_marks },
+                  { label: "Quiz 3", value: currentGrade.quiz3_marks },
                 ],
                 "Best 3 Quizzes Total",
                 quizTotal,
@@ -285,8 +464,11 @@ export default function Results() {
                 "Assignments & Attendance",
                 "assignment",
                 [
-                  { label: "Assignments", value: grades.assignments_marks },
-                  { label: "Attendance", value: grades.attendance_marks },
+                  {
+                    label: "Assignments",
+                    value: currentGrade.assignments_marks,
+                  },
+                  { label: "Attendance", value: currentGrade.attendance_marks },
                 ],
                 null,
                 null,
@@ -297,8 +479,11 @@ export default function Results() {
                 "Major Examinations",
                 "school",
                 [
-                  { label: "Mid Semester", value: grades.mid_sem_marks },
-                  { label: "Final Semester", value: grades.final_sem_marks },
+                  { label: "Mid Semester", value: currentGrade.mid_sem_marks },
+                  {
+                    label: "Final Semester",
+                    value: currentGrade.final_sem_marks,
+                  },
                 ],
                 null,
                 null,
@@ -331,12 +516,12 @@ export default function Results() {
 
                 <View style={styles.finalGradeContent}>
                   <Text style={[styles.finalGradeValue, { color: gradeColor }]}>
-                    {grades.grade}
+                    {currentGrade.grade}
                   </Text>
                   <Text
                     style={[styles.finalTotalMarks, { color: colors.textDim }]}
                   >
-                    {grades.total_marks} / 120 Points
+                    {currentGrade.total_marks} / 130 Points
                   </Text>
                 </View>
               </View>

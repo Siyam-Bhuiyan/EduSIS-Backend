@@ -1,7 +1,6 @@
 # EduSIS Backend
 
-Educational Student Information System (EduSIS) Backend API built with Node.js, Express.js, and PostgreSQL.
-
+Educational Student Information System (EduSIS) Backend API built with Node.js, Express.js, mongodb
 ## Table of Contents
 
 - [Tech Stack](#tech-stack)
@@ -15,11 +14,9 @@ Educational Student Information System (EduSIS) Backend API built with Node.js, 
 
 - Node.js
 - Express.js
-- PostgreSQL
-- JWT for Authentication
+- mongodb
 - Multer for File Upload
-- bcrypt for Password Hashing
-- cors for Cross-Origin Resource Sharing
+
 
 ## Project Setup
 
@@ -257,33 +254,18 @@ CREATE TABLE events (
 - PUT /api/events/:id - Update event
 - DELETE /api/events/:id - Delete event
 
-## Authentication
 
-The backend uses JWT (JSON Web Tokens) for authentication:
-
-1. User logs in with credentials
-2. Server validates and returns JWT token
-3. Client includes token in Authorization header
-4. Server validates token for protected routes
 
 ## File Storage
 
 For handling file uploads (assignments, profile pictures, etc.):
 
 1. Use Multer middleware for file upload handling
-2. Store files in cloud storage (AWS S3 recommended)
+
 3. Store file URLs in database
 4. Implement file type and size validation
 5. Generate signed URLs for secure file access
 
 ---
 
-Remember to:
-
-- Implement proper error handling
-- Add request validation
-- Add rate limiting
-- Implement logging
-- Add API documentation using Swagger
-- Set up CI/CD pipeline
-- Add unit and integration tests
+i will save data in mongodb

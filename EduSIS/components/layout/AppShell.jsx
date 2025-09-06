@@ -30,8 +30,8 @@ export default function AppShell({
   const [eventsOpen, setEventsOpen] = useState(false);
   const { colors, toggle } = useTheme();
 
-  // fetch user + events from store/api
-  const avatarSource = require("../../assets/profile.jpg"); // replace with actual user avatar
+
+  const avatarSource = require("../../assets/profile.png"); 
   const upcoming = [
     {
       id: 1,

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   ScrollView,
@@ -6,93 +6,174 @@ import {
   View,
   Text,
   TouchableOpacity,
+  ActivityIndicator,
+  Alert,
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import CourseCard from "./CourseCard";
 import { useTheme } from "../../theme/ThemeProvider";
+import { useUser } from "../../contexts/UserContext";
+import ApiService from "../../services/ApiService";
+
+const DEMO_ENROLLMENTS = [
+  {
+    _id: "demo-enrollment-1",
+    section: {
+      course: {
+        courseCode: "CSE-301",
+        title: "Computer Networks",
+      },
+      teacher: {
+        user: {
+          name: "Dr. Sarah Johnson",
+        },
+      },
+      section: "A",
+    },
+  },
+  {
+    _id: "demo-enrollment-2",
+    section: {
+      course: {
+        courseCode: "CSE-205",
+        title: "Database Systems",
+      },
+      teacher: {
+        user: {
+          name: "Prof. Michael Chen",
+        },
+      },
+      section: "B",
+    },
+  },
+  {
+    _id: "demo-enrollment-3",
+    section: {
+      course: {
+        courseCode: "CSE-401",
+        title: "Software Engineering",
+      },
+      teacher: {
+        user: {
+          name: "Dr. Emily Rodriguez",
+        },
+      },
+      section: "A",
+    },
+  },
+];
 
 export default function StudentDashboard() {
   const { colors } = useTheme();
   const navigation = useNavigation();
+  const { user } = useUser();
 
-  // Demo data (with cover + teacher avatar)
-  const courses = [
-    {
-      id: "CSE-301",
-      title: "Computer Networks",
-      teacher: "Ashraful Alam Khan",
-      section: "Section 1 & 2",
-      coverUri:
-        "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=1400&q=60", // networks
-      teacherAvatarUri:
-        "https://cse.iutoic-dhaka.edu/uploads/img/1624511577_1067.jpg",
-    },
-    {
-      id: "CSE-205",
-      title: "Database Systems",
-      teacher: "Ridwan Kabir",
-      section: "Section 1 & 2",
-      coverUri:
-        "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=1400&q=60", // database
-      teacherAvatarUri:
-        "https://cse.iutoic-dhaka.edu/uploads/img/1601107075_1082.jpg",
-    },
-    {
-      id: "CSE-401",
-      title: "Software Engineering",
-      teacher: "Shohel Ahmed",
-      section: "Section 1 & 2",
-      coverUri:
-        "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?w=1400&q=60", // code editor
-      teacherAvatarUri:
-        "https://cse.iutoic-dhaka.edu/uploads/img/1601106855_1128.jpg",
-    },
-    {
-      id: "CSE-102",
-      title: "Machine Learning",
-      teacher: "Dr. Md Moniruzzaman",
-      section: "Section 1 & 2",
-      coverUri:
-        "https://www.kdnuggets.com/wp-content/uploads/tayo_8_best_libraries_machine_learning_explained_1.jpg", // ML
-      teacherAvatarUri:
-        "https://cse.iutoic-dhaka.edu/uploads/img/1617768281_1035.png",
-    },
-    {
-      id: "CSE-303",
-      title: "Mobile App Development",
-      teacher: "Mr. Davis",
-      section: "Section E",
-      coverUri:
-        "https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?w=1400&q=60",
-      teacherAvatarUri:
-        "https://cse.iutoic-dhaka.edu/uploads/img/1601107015_1938.jpg",
-    },
-  ];
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      if (user?.id) {
+        const response = await ApiService.getStudentDashboard(user.id);
+        if (
+          response.success &&
+          response.data &&
+          response.data.enrollments &&
+          response.data.enrollments.length > 0
+        ) {
+          setDashboardData(response.data);
+        } else {
+          // Use demo data if no real data found
+          console.log("Using demo dashboard data");
+          setDashboardData({
+            enrollments: DEMO_ENROLLMENTS,
+          });
+        }
+      }
+    } catch (error) {
+      console.log("Using demo dashboard data due to API error:", error.message);
+      setDashboardData({
+        enrollments: DEMO_ENROLLMENTS,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: colors.background }]}
+      >
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={[styles.loadingText, { color: colors.text }]}>
+            Loading...
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Get courses from dashboard data
+  const courses = dashboardData?.enrollments || [];
 
   return (
-    <SafeAreaView style={[styles.screen, { backgroundColor: colors.bg }]}>
-      <ScrollView contentContainerStyle={styles.content}>
-
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
+      <ScrollView style={styles.content}>
         {/* Courses Section */}
         <View style={styles.coursesSection}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            My Courses
-          </Text>
-          {courses.map((c) => (
-            <CourseCard
-              key={c.id}
-              courseID={c.id}
-              courseTitle={c.title}
-              teacherName={c.teacher}
-              section={c.section}
-              coverUri={c.coverUri}
-              teacherAvatarUri={c.teacherAvatarUri}
-              // Pass theme colors to CourseCard if needed
-              colors={colors}
-            />
-          ))}
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              My Courses
+            </Text>
+            <TouchableOpacity>
+              <Text style={[styles.seeAllText, { color: colors.primary }]}>
+                See All
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {courses.length > 0 ? (
+            courses.map((enrollment, index) => (
+              <CourseCard
+                key={enrollment._id || index}
+                courseID={
+                  enrollment.section?.course?.courseCode || `course-${index}`
+                }
+                courseTitle={
+                  enrollment.section?.course?.title || "Course Title"
+                }
+                teacherName={
+                  enrollment.section?.teacher?.user?.name || "Teacher Name"
+                }
+                section={enrollment.section?.section || "N/A"}
+                coverUri="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=1400&q=60"
+                teacherAvatarUri={`https://ui-avatars.com/api/?name=${encodeURIComponent(
+                  enrollment.section?.teacher?.user?.name || "T"
+                )}&background=random`}
+                colors={colors}
+              />
+            ))
+          ) : (
+            <View style={[styles.emptyState, { backgroundColor: colors.card }]}>
+              <MaterialIcons
+                name="school"
+                size={48}
+                color={colors.textSecondary}
+              />
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                No courses enrolled yet
+              </Text>
+            </View>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -100,14 +181,79 @@ export default function StudentDashboard() {
 }
 
 const styles = StyleSheet.create({
-  screen: {
+  container: {
     flex: 1,
-    backgroundColor: "#f5f7fa",
   },
   content: {
-    padding: 14,
+    flex: 1,
+    padding: 16,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+  },
+  welcomeSection: {
+    marginBottom: 24,
+  },
+  welcomeText: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: 16,
+  },
+  statsSection: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 24,
+  },
+  statCard: {
+    flex: 1,
+    padding: 16,
+    marginHorizontal: 4,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  statNumber: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginTop: 8,
+  },
+  statLabel: {
+    fontSize: 12,
+    textAlign: "center",
+    marginTop: 4,
   },
   coursesSection: {
-    marginTop: 8,
+    flex: 1,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+  seeAllText: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  emptyState: {
+    padding: 32,
+    alignItems: "center",
+    borderRadius: 12,
+  },
+  emptyText: {
+    fontSize: 16,
+    marginTop: 12,
   },
 });

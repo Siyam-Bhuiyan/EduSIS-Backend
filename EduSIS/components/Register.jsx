@@ -10,23 +10,45 @@ import {
   Platform,
   Alert,
   Image,
+  ActivityIndicator,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
+import ApiService from "../services/ApiService";
 
 const Register = ({ navigation }) => {
   const [role, setRole] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     if (!role || !name || !email || !password) {
       Alert.alert("Error", "All fields are required.");
       return;
     }
 
-    Alert.alert("Success", "Registration successful!");
-    navigation.navigate("Login");
+    setLoading(true);
+    try {
+      const userData = { name, email, password, role };
+      console.log("Attempting registration with:", userData);
+
+      const response = await ApiService.register(userData);
+      console.log("Registration response:", response);
+
+      if (response.success) {
+        Alert.alert("Success", "Registration successful! Please login.");
+        navigation.navigate("Login");
+      }
+    } catch (error) {
+      console.error("Registration error:", error);
+      Alert.alert(
+        "Registration Failed",
+        error.message || "Something went wrong"
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -42,10 +64,13 @@ const Register = ({ navigation }) => {
         <View style={styles.wrapper}>
           <View style={styles.logoContainer}>
             <View style={styles.logoWrapper}>
-              <Image source={require("../assets/logo.jpg")} style={styles.logo} />
+              <Image
+                source={require("../assets/logo.jpg")}
+                style={styles.logo}
+              />
             </View>
           </View>
-          
+
           <Text style={styles.title}>Create Account</Text>
           <Text style={styles.subtitle}>Join EDUSIS today</Text>
 
@@ -91,8 +116,16 @@ const Register = ({ navigation }) => {
               autoCapitalize="none"
             />
 
-            <TouchableOpacity style={styles.button} onPress={handleRegister}>
-              <Text style={styles.buttonText}>Register</Text>
+            <TouchableOpacity
+              style={[styles.button, loading && styles.buttonDisabled]}
+              onPress={handleRegister}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.buttonText}>Register</Text>
+              )}
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -114,46 +147,46 @@ const Register = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: "#1a1a2e",
   },
-  
+
   // Artistic background shapes
   artShape1: {
-    position: 'absolute',
+    position: "absolute",
     width: 180,
     height: 180,
     borderRadius: 90,
-    backgroundColor: 'rgba(150, 206, 180, 0.12)',
+    backgroundColor: "rgba(150, 206, 180, 0.12)",
     top: -40,
     left: -40,
   },
   artShape2: {
-    position: 'absolute',
+    position: "absolute",
     width: 160,
     height: 160,
     borderRadius: 25,
-    backgroundColor: 'rgba(254, 202, 87, 0.1)',
+    backgroundColor: "rgba(254, 202, 87, 0.1)",
     bottom: -20,
     right: -20,
   },
 
   scroll: {
     flexGrow: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
     padding: 24,
   },
   wrapper: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   logoContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 20,
   },
   logoWrapper: {
     padding: 15,
     borderRadius: 60,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    shadowColor: '#fff',
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    shadowColor: "#fff",
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.3,
     shadowRadius: 15,
@@ -166,69 +199,73 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
-    fontWeight: '800',
-    color: '#ffffff',
+    fontWeight: "800",
+    color: "#ffffff",
     marginBottom: 8,
-    textAlign: 'center',
+    textAlign: "center",
   },
   subtitle: {
     fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: "rgba(255, 255, 255, 0.7)",
     marginBottom: 32,
-    textAlign: 'center',
+    textAlign: "center",
   },
   form: {
-    width: '100%',
+    width: "100%",
     gap: 16,
   },
   pickerContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: "rgba(255, 255, 255, 0.2)",
   },
   picker: {
     height: 50,
-    color: '#ffffff',
+    color: "#ffffff",
   },
   input: {
     height: 50,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
     borderRadius: 12,
     paddingHorizontal: 15,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: "rgba(255, 255, 255, 0.2)",
     fontSize: 16,
-    color: '#ffffff',
+    color: "#ffffff",
   },
   button: {
-    backgroundColor: '#96CEB4',
+    backgroundColor: "#96CEB4",
     paddingVertical: 15,
     borderRadius: 12,
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 10,
     elevation: 5,
-    shadowColor: '#96CEB4',
+    shadowColor: "#96CEB4",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
   },
+  buttonDisabled: {
+    backgroundColor: "#6c757d",
+    shadowOpacity: 0.1,
+  },
   buttonText: {
-    color: '#ffffff',
-    fontWeight: '700',
+    color: "#ffffff",
+    fontWeight: "700",
     fontSize: 16,
   },
   loginLink: {
     marginTop: 20,
-    alignItems: 'center',
+    alignItems: "center",
   },
   loginText: {
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: "rgba(255, 255, 255, 0.7)",
     fontSize: 14,
   },
   loginBold: {
-    fontWeight: '700',
-    color: '#FF6B6B',
+    fontWeight: "700",
+    color: "#FF6B6B",
   },
 });
 

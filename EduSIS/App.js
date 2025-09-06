@@ -5,9 +5,10 @@ import {
   DarkTheme as NavDarkTheme,
   DefaultTheme as NavLightTheme,
 } from "@react-navigation/native";
- // keep your current path
-import RootNavigator from "./navigation/RootNavigator"; 
+// keep your current path
+import RootNavigator from "./navigation/RootNavigator";
 import { ThemeProvider, useTheme } from "./theme/ThemeProvider";
+import { UserProvider } from "./contexts/UserContext";
 
 function WithNavigation() {
   const { isDark } = useTheme();
@@ -20,8 +21,10 @@ function WithNavigation() {
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <WithNavigation />
-    </ThemeProvider>
+    <UserProvider>
+      <ThemeProvider>
+        <WithNavigation />
+      </ThemeProvider>
+    </UserProvider>
   );
 }

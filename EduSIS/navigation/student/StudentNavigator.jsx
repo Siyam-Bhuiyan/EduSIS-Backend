@@ -18,7 +18,7 @@ import AppShell from "../../components/layout/AppShell";
 
 const Drawer = createDrawerNavigator();
 
-/** Helper to wrap any screen with the global AppShell */
+
 const withShell = (Component, shellProps) => (props) =>
   (
     <AppShell {...shellProps}>

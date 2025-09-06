@@ -10,24 +10,45 @@ import {
   ScrollView,
   Alert,
   Image,
+  ActivityIndicator,
 } from "react-native";
-import { Picker } from "@react-native-picker/picker";
+import ApiService from "../services/ApiService";
+import { useUser } from "../contexts/UserContext";
 
 const Login = ({ navigation }) => {
-  const [role, setRole] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { saveUser } = useUser();
 
-  const handleLogin = () => {
-    if (!role) {
-      Alert.alert("Error", "All fields are required.");
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert("Error", "Email and password are required.");
       return;
     }
 
-    if (role === "student") navigation.navigate("StudentApp");
-    else if (role === "teacher") navigation.navigate("TeacherApp");
-    else if (role === "admin") navigation.navigate("AdminApp");
-    else Alert.alert("Error", "Invalid role selected.");
+    setLoading(true);
+    try {
+      const response = await ApiService.login(email, password);
+
+      if (response.success) {
+        const userData = response.data;
+        await saveUser(userData);
+
+        // Navigate based on user role
+        if (userData.role === "student") navigation.navigate("StudentApp");
+        else if (userData.role === "teacher") navigation.navigate("TeacherApp");
+        else if (userData.role === "admin") navigation.navigate("AdminApp");
+        else Alert.alert("Error", "Invalid user role.");
+      }
+    } catch (error) {
+      Alert.alert(
+        "Login Failed",
+        error.message || "Please check your credentials"
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -43,27 +64,17 @@ const Login = ({ navigation }) => {
         <View style={styles.wrapper}>
           <View style={styles.logoContainer}>
             <View style={styles.logoWrapper}>
-              <Image source={require("../assets/logo.jpg")} style={styles.logo} />
+              <Image
+                source={require("../assets/logo.jpg")}
+                style={styles.logo}
+              />
             </View>
           </View>
-          
+
           <Text style={styles.title}>Welcome</Text>
           <Text style={styles.subtitle}>Login to EDUSIS</Text>
 
           <View style={styles.form}>
-            <View style={styles.pickerContainer}>
-              <Picker
-                selectedValue={role}
-                onValueChange={(v) => setRole(v)}
-                style={styles.picker}
-              >
-                <Picker.Item label="Select Role" value="" />
-                <Picker.Item label="Admin" value="admin" />
-                <Picker.Item label="Student" value="student" />
-                <Picker.Item label="Teacher" value="teacher" />
-              </Picker>
-            </View>
-
             <TextInput
               style={styles.input}
               placeholder="Email"
@@ -84,8 +95,16 @@ const Login = ({ navigation }) => {
               autoCapitalize="none"
             />
 
-            <TouchableOpacity style={styles.button} onPress={handleLogin}>
-              <Text style={styles.buttonText}>Login</Text>
+            <TouchableOpacity
+              style={[styles.button, loading && styles.buttonDisabled]}
+              onPress={handleLogin}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.buttonText}>Login</Text>
+              )}
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -107,45 +126,45 @@ const Login = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: "#1a1a2e",
   },
-  
+
   artShape1: {
-    position: 'absolute',
+    position: "absolute",
     width: 200,
     height: 200,
     borderRadius: 100,
-    backgroundColor: 'rgba(255, 107, 107, 0.1)',
+    backgroundColor: "rgba(255, 107, 107, 0.1)",
     top: -50,
     right: -50,
   },
   artShape2: {
-    position: 'absolute',
+    position: "absolute",
     width: 150,
     height: 150,
     borderRadius: 20,
-    backgroundColor: 'rgba(78, 205, 196, 0.08)',
+    backgroundColor: "rgba(78, 205, 196, 0.08)",
     bottom: -30,
     left: -30,
   },
 
   scroll: {
     flexGrow: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
     padding: 24,
   },
   wrapper: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   logoContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 20,
   },
   logoWrapper: {
     padding: 15,
     borderRadius: 60,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    shadowColor: '#fff',
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    shadowColor: "#fff",
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.3,
     shadowRadius: 15,
@@ -158,69 +177,73 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
-    fontWeight: '800',
-    color: '#ffffff',
+    fontWeight: "800",
+    color: "#ffffff",
     marginBottom: 8,
-    textAlign: 'center',
+    textAlign: "center",
   },
   subtitle: {
     fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: "rgba(255, 255, 255, 0.7)",
     marginBottom: 32,
-    textAlign: 'center',
+    textAlign: "center",
   },
   form: {
-    width: '100%',
+    width: "100%",
     gap: 16,
   },
   pickerContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: "rgba(255, 255, 255, 0.2)",
   },
   picker: {
     height: 50,
-    color: '#ffffff',
+    color: "#ffffff",
   },
   input: {
     height: 50,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
     borderRadius: 12,
     paddingHorizontal: 15,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: "rgba(255, 255, 255, 0.2)",
     fontSize: 16,
-    color: '#ffffff',
+    color: "#ffffff",
   },
   button: {
-    backgroundColor: '#45B7D1',
+    backgroundColor: "#45B7D1",
     paddingVertical: 15,
     borderRadius: 12,
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 10,
     elevation: 5,
-    shadowColor: '#45B7D1',
+    shadowColor: "#45B7D1",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
   },
+  buttonDisabled: {
+    backgroundColor: "#6c757d",
+    shadowOpacity: 0.1,
+  },
   buttonText: {
-    color: '#ffffff',
-    fontWeight: '700',
+    color: "#ffffff",
+    fontWeight: "700",
     fontSize: 16,
   },
   registerLink: {
     marginTop: 20,
-    alignItems: 'center',
+    alignItems: "center",
   },
   registerText: {
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: "rgba(255, 255, 255, 0.7)",
     fontSize: 14,
   },
   registerBold: {
-    fontWeight: '700',
-    color: '#4ECDC4',
+    fontWeight: "700",
+    color: "#4ECDC4",
   },
 });
 

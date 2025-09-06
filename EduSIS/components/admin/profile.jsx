@@ -11,9 +11,9 @@ export default function AdminProfile() {
   // Demo admin data
   const adminData = {
     id: 'ADM001',
-    name: 'John Anderson',
+    name: ' Noman Ahmed',
     role: 'System Administrator',
-    email: 'john.anderson@edusis.edu',
+    email: 'Noman@edusis.edu',
     phone: '+1 (555) 123-4567',
     department: 'IT Administration',
     joinDate: '2020-01-15',
