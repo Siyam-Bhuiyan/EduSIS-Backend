@@ -19,18 +19,15 @@ router.use(protect);
 // Calendar view
 router.get("/calendar", getCalendarEvents);
 
-// Upcoming events
 router.get("/upcoming", getUpcomingEvents);
 
-// Main event routes
 router.route("/").get(getEvents).post(
-  authorize("admin", "teacher"), // Only admins and teachers can create events
+  authorize("admin", "teacher"),
   uploadMultiple("attachments", 3),
   handleMulterError,
   createEvent
 );
 
-// Individual event operations
 router
   .route("/:id")
   .get(getEvent)
