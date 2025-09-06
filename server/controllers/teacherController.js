@@ -677,8 +677,6 @@ exports.createOrUpdateGrade = asyncHandler(async (req, res, next) => {
         });
       }
     } else {
-      // For admin users without specifying teacher, we'll use the first available teacher
-      // or create a default admin teacher profile
       teacher = await Teacher.findOne().limit(1);
       if (!teacher) {
         return res.status(400).json({

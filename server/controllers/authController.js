@@ -60,7 +60,6 @@ exports.register = asyncHandler(async (req, res, next) => {
 exports.login = asyncHandler(async (req, res, next) => {
   const { email, password } = req.body;
 
-  // Validate email & password
   if (!email || !password) {
     return res.status(400).json({
       success: false,
