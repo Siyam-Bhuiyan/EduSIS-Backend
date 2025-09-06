@@ -100,7 +100,6 @@ assignmentSchema.virtual("isOverdue").get(function () {
   return new Date() > this.dueDate;
 });
 
-// Virtual to get time remaining
 assignmentSchema.virtual("timeRemaining").get(function () {
   const now = new Date();
   const due = new Date(this.dueDate);
