@@ -11,6 +11,7 @@ import StudentEnrollment from "../../components/admin/StudentEnrollment";
 import TeacherEnrollment from "../../components/admin/TeacherAssignment";
 import Profile from "../../components/admin/profile";
 import AdmitCards from "../../components/admin/AdmitCards";
+import AdminAIChatbot from "../../components/admin/AdminAIChatbot";
 
 // Shared UI Components
 import Sidebar from "../../components/layout/Sidebar";
@@ -49,6 +50,12 @@ export default function AdminNavigator() {
       title: "Admit Cards",
       icon: "assignment",
       screen: "AdmitCards",
+    },
+    {
+      id: "ai-assistant",
+      title: "AI Assistant",
+      icon: "smart-toy",
+      screen: "AdminAIChatbot",
     },
   ];
 
@@ -182,6 +189,18 @@ export default function AdminNavigator() {
         options={{
           drawerIcon: ({ color, size }) => (
             <MaterialIcons name="assignment" size={size} color={color} />
+          ),
+        }}
+      />
+      <Drawer.Screen
+        name="AdminAIChatbot"
+        component={withShell(AdminAIChatbot, {
+          title: "AI Admin Assistant",
+          subtitle: "Get Management & System Support",
+        })}
+        options={{
+          drawerIcon: ({ color, size }) => (
+            <MaterialIcons name="smart-toy" size={size} color={color} />
           ),
         }}
       />

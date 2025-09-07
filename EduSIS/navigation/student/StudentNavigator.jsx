@@ -11,13 +11,13 @@ import Calendar from "../../components/student/Calendar";
 import Profile from "../../components/student/Profile";
 import CourseDetail from "../../components/student/CourseDetail";
 import AdmitCards from "../../components/student/AdmitCards";
+import AIChatbot from "../../components/student/AIChatbot";
 
 // Shared UI
 import Sidebar from "../../components/layout/Sidebar";
 import AppShell from "../../components/layout/AppShell";
 
 const Drawer = createDrawerNavigator();
-
 
 const withShell = (Component, shellProps) => (props) =>
   (
@@ -37,6 +37,12 @@ export default function StudentNavigator() {
       title: "Admit Cards",
       icon: "assignment-ind",
       screen: "AdmitCards",
+    },
+    {
+      id: 6,
+      title: "AI Assistant",
+      icon: "smart-toy",
+      screen: "AIChatbot",
     },
   ];
 
@@ -170,6 +176,18 @@ export default function StudentNavigator() {
         options={{
           drawerIcon: ({ color, size }) => (
             <MaterialIcons name="assignment-ind" size={size} color={color} />
+          ),
+        }}
+      />
+      <Drawer.Screen
+        name="AIChatbot"
+        component={withShell(AIChatbot, {
+          title: "AI Assistant",
+          subtitle: "Get Help & Academic Support",
+        })}
+        options={{
+          drawerIcon: ({ color, size }) => (
+            <MaterialIcons name="smart-toy" size={size} color={color} />
           ),
         }}
       />
