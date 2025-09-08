@@ -483,7 +483,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 
-  // Chat Container
   chatContainer: {
     flex: 1,
   },

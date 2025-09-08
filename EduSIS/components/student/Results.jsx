@@ -22,6 +22,41 @@ const DEMO_COURSES = [
   { course_id: "CSE-401", title: "Software Engineering" },
 ];
 
+const DEMO_GRADES = {
+  "demo-course-1": {
+    quiz1_marks: 9,
+    quiz2_marks: 8,
+    quiz3_marks: 10,
+    assignments_marks: 18,
+    attendance_marks: 8,
+    mid_sem_marks: 24,
+    final_sem_marks: 36,
+    total_marks: 113,
+    grade: "A",
+  },eEffect } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  SafeAreaView,
+  StatusBar,
+  Animated,
+  Alert,
+} from "react-native";
+import { Picker } from "@react-native-picker/picker";
+import { MaterialIcons } from "@expo/vector-icons";
+import { useTheme } from "../../theme/ThemeProvider";
+import { useUser } from "../../contexts/UserContext";
+import ApiService from "../../services/ApiService";
+
+const DEMO_COURSES = [
+  { course_id: "CSE-301", title: "Computer Networks" },
+  { course_id: "CSE-205", title: "Database Systems" },
+  { course_id: "CSE-401", title: "Software Engineering" },
+];
+
 // Per-course demo grades (shape mirrors your web component)
 const DEMO_GRADES = {
   "CSE-301": {
@@ -675,12 +710,10 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 
-  // Cards Container
   cardsContainer: {
     gap: 16,
   },
 
-  // Grade Cards
   gradeCard: {
     borderRadius: 16,
     padding: 20,
