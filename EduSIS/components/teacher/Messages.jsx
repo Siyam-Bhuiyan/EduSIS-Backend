@@ -16,7 +16,6 @@ import {
 import { MaterialIcons } from "@expo/vector-icons";
 import { useTheme } from "../../theme/ThemeProvider";
 
-// Demo data remains the same
 const DEMO_CONVERSATIONS = [
   {
     id: "1",
