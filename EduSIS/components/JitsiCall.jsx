@@ -68,11 +68,8 @@ export default function JitsiCall({
   const injectedJS = `
     (function() {
       try {
-        // Hook into Jitsi IFrame API events
         const send = (payload) => window.ReactNativeWebView?.postMessage(JSON.stringify(payload));
         const observer = new MutationObserver(function(mutations) {
-          // naive: when the large "You left the meeting" container appears OR
-          // when the hangup button is clicked, try to emit event.
           const hangupBtn = document.querySelector('[id^="hangup"]');
           if (hangupBtn && !hangupBtn.__patched) {
             hangupBtn.__patched = true;

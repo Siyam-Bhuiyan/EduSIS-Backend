@@ -309,7 +309,6 @@ const styles = StyleSheet.create({
     transform: [{ rotate: '-8deg' }],
   },
 
-  // Main tagline
   taglineContainer: {
     position: 'absolute',
     bottom: height * 0.12,
