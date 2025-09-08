@@ -88,7 +88,6 @@ export default function StudentDashboard() {
         ) {
           setDashboardData(response.data);
         } else {
-          // Use demo data if no real data found
           console.log("Using demo dashboard data");
           setDashboardData({
             enrollments: DEMO_ENROLLMENTS,

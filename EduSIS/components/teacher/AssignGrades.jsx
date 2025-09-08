@@ -138,15 +138,12 @@ export default function AssignGrades() {
     try {
       const response = await ApiService.getTeacherCourses(user.id);
       if (response.success && response.data && response.data.length > 0) {
-        // Use real data if available
         setCourses(response.data);
       } else {
-        // Fallback to demo data
         setCourses(DEMO_COURSES);
       }
     } catch (error) {
       console.log("Using demo courses due to API error:", error.message);
-      // Always fallback to demo data instead of showing alerts
       setCourses(DEMO_COURSES);
     }
   };
@@ -155,15 +152,12 @@ export default function AssignGrades() {
     try {
       const response = await ApiService.getStudents(user.id);
       if (response.success && response.data && response.data.length > 0) {
-        // Use real data if available
         setStudents(response.data);
       } else {
-        // Fallback to demo data
         setStudents(DEMO_STUDENTS);
       }
     } catch (error) {
       console.log("Using demo students due to API error:", error.message);
-      // Always fallback to demo data instead of showing alerts
       setStudents(DEMO_STUDENTS);
     }
   };
